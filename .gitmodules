@@ -1,0 +1,6 @@
+[submodule "BinWatcher_config"]
+	path = BinWatcher_config
+	url = https://github.com/ZaimAchraf/BinWatcher_config.git
+[submodule "config"]
+	path = config
+	url = https://github.com/ZaimAchraf/BinWatcher_config.git
