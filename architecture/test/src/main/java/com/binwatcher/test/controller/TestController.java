@@ -27,4 +27,18 @@ public class TestController {
                 "defaultXY : (" + defaultX + ", " + defaultY + ")\n paramXY : (" + paramX + ", " + paramY + ")",
                 HttpStatus.OK);
     }
+
+    @GetMapping("/admin")
+    public ResponseEntity<String> testAdmin() {
+        return new ResponseEntity<String>(
+                "Welcome Admin",
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<String> testUser() {
+        return new ResponseEntity<String>(
+                "Welcome User",
+                HttpStatus.OK);
+    }
 }
