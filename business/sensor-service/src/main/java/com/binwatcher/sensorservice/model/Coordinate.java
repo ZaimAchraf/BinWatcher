@@ -1,4 +1,4 @@
-package com.binwatcher.binservice.model;
+package com.binwatcher.sensorservice.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

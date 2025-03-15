@@ -1,7 +1,7 @@
 package com.binwatcher.binservice.entity;
 
+import com.binwatcher.apimodule.model.Coordinate;
 import com.binwatcher.binservice.model.BinStatus;
-import com.binwatcher.binservice.model.Coordinate;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -15,7 +15,7 @@ public class Bin {
     private String id;
     private String location;
     private Coordinate coordinates;
-    private Integer fillLevel = 0;
+    private short fillLevel = 0;
     private Integer alertThreshold = 80;
     private BinStatus status = BinStatus.OPERATIONAL;
 }
