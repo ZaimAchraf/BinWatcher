@@ -47,7 +47,7 @@ public class BinController {
     }
 
     @PatchMapping("/{id}/fill-level")
-    public ResponseEntity<Bin> updateFillLevel(@PathVariable String id, @RequestParam Integer level) {
+    public ResponseEntity<Bin> updateFillLevel(@PathVariable String id, @RequestParam short level) {
         try {
             Bin bin = binService.updateFillLevel(id, level);
             return new ResponseEntity<>(bin, HttpStatus.OK);

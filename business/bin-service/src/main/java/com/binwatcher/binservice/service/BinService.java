@@ -1,5 +1,6 @@
 package com.binwatcher.binservice.service;
 
+import com.binwatcher.apimodule.model.FillAlert;
 import com.binwatcher.binservice.entity.Bin;
 import com.binwatcher.binservice.repository.BinRepository;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.List;
 public class BinService {
 
     private final BinRepository binRepository;
+    private final BinFillProducerService producerService;
 
     public List<Bin> getAll() {
         return binRepository.findAll();
@@ -39,14 +41,23 @@ public class BinService {
         return binRepository.save(existingBin);
     }
 
-    public Bin updateFillLevel(String binId, Integer level) {
-        if (binId == null || level == null) {
+    public Bin updateFillLevel(String binId, short level) {
+        if (binId == null) {
             throw new IllegalArgumentException("Bin ID and level must not be null");
         }
 
         Bin bin = binRepository.findById(binId).orElseThrow(() -> new IllegalArgumentException("Bin not found"));
-
         bin.setFillLevel(level);
+
+        if (level > bin.getAlertThreshold()) {
+            producerService.generateAlert(
+                    new FillAlert(binId,
+                            bin.getLocation(),
+                            bin.getCoordinates(),
+                            level
+                    )
+            );
+        }
         return binRepository.save(bin);
     }
 
