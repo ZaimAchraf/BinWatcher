@@ -12,6 +12,7 @@ import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 public class User implements UserDetails {
 
     @Id

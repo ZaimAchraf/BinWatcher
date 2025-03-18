@@ -1,10 +1,13 @@
 package com.binwatcher.binservice.service;
 
 import com.binwatcher.apimodule.model.FillAlert;
+import com.binwatcher.binservice.client.AssignmentClient;
 import com.binwatcher.binservice.entity.Bin;
+import com.binwatcher.binservice.model.BinStatus;
 import com.binwatcher.binservice.repository.BinRepository;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +18,9 @@ public class BinService {
 
     private final BinRepository binRepository;
     private final BinFillProducerService producerService;
+    private final AssignmentClient assignmentClient;
+
+    private static final Logger log = LoggerFactory.getLogger(BinService.class);
 
     public List<Bin> getAll() {
         return binRepository.findAll();
@@ -47,6 +53,7 @@ public class BinService {
         }
 
         Bin bin = binRepository.findById(binId).orElseThrow(() -> new IllegalArgumentException("Bin not found"));
+        short oldLevel = bin.getFillLevel();
         bin.setFillLevel(level);
 
         if (level > bin.getAlertThreshold()) {
@@ -57,6 +64,16 @@ public class BinService {
                             level
                     )
             );
+            bin.setStatus(BinStatus.FULL);
+        }else if (oldLevel > bin.getAlertThreshold()) {
+            // set status of bin Operational and disable all assignments if exists
+            bin.setStatus(BinStatus.OPERATIONAL);
+            try {
+                assignmentClient.DisableAssignments(bin.getId());
+                log.info("Assignments was successfully disabled");
+            } catch (Exception e) {
+                log.error("Failed to disable assignments for bin {}: {}", bin.getId(), e.getMessage());
+            }
         }
         return binRepository.save(bin);
     }

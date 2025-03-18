@@ -20,10 +20,10 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest registerParams) {
+    public ResponseEntity<String> register(@RequestBody RegisterRequest registerParams) {
         try {
-            User registeredUser = authService.register(registerParams);
-            return ResponseEntity.ok(registeredUser);
+            String registeredUserId = authService.register(registerParams);
+            return ResponseEntity.ok(registeredUserId);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
