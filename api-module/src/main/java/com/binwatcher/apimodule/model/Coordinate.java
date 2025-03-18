@@ -16,6 +16,8 @@ public class Coordinate {
         this.longitude = longitude;
     }
 
+    public Coordinate() {}
+
     public Double getLatitude() {
         return latitude;
     }

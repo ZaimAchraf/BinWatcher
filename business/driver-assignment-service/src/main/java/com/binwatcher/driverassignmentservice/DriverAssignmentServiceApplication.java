@@ -1,4 +1,4 @@
-package com.binwatcher.driverservice;
+package com.binwatcher.driverassignmentservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,10 +8,10 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableFeignClients
-public class DriverServiceApplication {
+public class DriverAssignmentServiceApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(DriverServiceApplication.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(DriverAssignmentServiceApplication.class, args);
+	}
 
 }

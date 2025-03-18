@@ -27,7 +27,7 @@ public class AuthService {
     private UserRepository userRepository;
     private AuthenticationManager authenticationManager;
     private JWTUtil jwtUtil;
-    public User register(RegisterRequest userParams) throws IllegalArgumentException, Exception {
+    public String register(RegisterRequest userParams) throws IllegalArgumentException, Exception {
         if (userRepository.findByEmail(userParams.getLogin()).isPresent()) {
             throw new IllegalArgumentException("Email : " + userParams.getLogin() + " already exists");
         }
@@ -40,8 +40,8 @@ public class AuthService {
                 .map(Authority::new)
                 .collect(Collectors.toList())
         );
-        userRepository.save(user);
-        return user;
+        user = userRepository.save(user);
+        return user.getId();
     }
 
     public List<User> getAll() {
