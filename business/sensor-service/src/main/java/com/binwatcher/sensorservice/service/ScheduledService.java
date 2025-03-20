@@ -27,7 +27,7 @@ public class ScheduledService {
         System.out.println("got " + listBins.size() + " bins from bin-service");
     }
 
-    @Scheduled(cron = "*/30 * * *  * ?")
+    @Scheduled(cron = "* */2 * *  * ?")
     public void mockFill() {
         int index = (int) (Math.random() * listBins.size());
         Bin bin = listBins.get(index);

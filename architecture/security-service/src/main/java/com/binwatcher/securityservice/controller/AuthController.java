@@ -7,6 +7,7 @@ import com.binwatcher.securityservice.model.RegisterRequest;
 import com.binwatcher.securityservice.service.AuthService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,6 +44,11 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("An unexpected error occurred: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getEmailById(@PathVariable String id) {
+        return authService.getById(id).isPresent() ? new ResponseEntity<>(authService.getById(id).get().getEmail(), HttpStatus.OK) : new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
     }
 
     @GetMapping("/all")

@@ -23,6 +23,10 @@ public class DriverService {
         return driverRepository.findAll();
     }
 
+    public Driver getById(String id) {
+        return driverRepository.findById(id).orElse(null);
+    }
+
     public Object create(CreateDriverRequest createDriverRequest) {
         ResponseEntity<String> response = userClient.register(createDriverRequest.getUserInfos());
         if (response.getStatusCode().is2xxSuccessful()) {
