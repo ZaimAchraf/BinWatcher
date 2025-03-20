@@ -4,12 +4,14 @@ import com.binwatcher.apimodule.model.AssignmentNotif;
 import com.binwatcher.apimodule.model.FillAlert;
 import com.binwatcher.apimodule.model.TypeNotif;
 import com.binwatcher.driverassignmentservice.client.DriverClient;
+import com.binwatcher.driverassignmentservice.client.UserClient;
 import com.binwatcher.driverassignmentservice.entity.DriverAssignment;
 import com.binwatcher.driverassignmentservice.model.Driver;
 import com.binwatcher.driverassignmentservice.repository.DriverAssignmentRepository;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -22,15 +24,16 @@ import java.util.Optional;
 public class AssignmentService {
 
     private final DriverClient driverClient;
+    private final UserClient userClient;
     private final DriverAssignmentRepository driverAssignmentRepository;
     private final AssignmentNotifProducer assignmentNotifProducer;
 
-    private static final Logger log = LoggerFactory.getLogger(AssignmentService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AssignmentService.class);
     public void assign(FillAlert alert) {
         List<DriverAssignment> assignments = driverAssignmentRepository.findByBinIdAndIsActiveTrue(alert.getBinId());
 
         if (!assignments.isEmpty()) { // Bin already assigned
-            log.info("Skip Assignment cause the bin is already assigned to the driver with id : " + assignments.get(0).getDriverId());
+            LOG.info("Skip Assignment cause the bin is already assigned to the driver with id : " + assignments.get(0).getDriverId());
             return ;
         }
         List<Driver> drivers = driverClient.getAll().getBody();
@@ -42,10 +45,13 @@ public class AssignmentService {
             assignment.setDriverId(nearestDriver.getId());
             driverAssignmentRepository.save(assignment);
             System.out.println("Assigned driver " + nearestDriver.getId() + " to bin " + alert.getBinId());
+            String email = getDriverEmail(nearestDriver.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Email not found for driver ID: " + assignment.getDriverId()));
             assignmentNotifProducer.generateAlert(
                     new AssignmentNotif(
                             assignment.getId(),
                             assignment.getDriverId(),
+                            email,
                             assignment.getBinId(),
                             assignment.getAssignmentDate(),
                             TypeNotif.ASSIGNMENT
@@ -78,11 +84,29 @@ public class AssignmentService {
             return ; // No assignment was found
         }
 
+        LOG.info("Got " + assignments.size() + " active assignments for bin : " + binId);
+
         assignments.forEach(assignment -> {
+
             assignment.setIsActive(false);
+
+            Driver driver;
+            ResponseEntity<Driver> response = driverClient.getById(assignment.getDriverId());
+            if (response != null && response.getStatusCode().is2xxSuccessful()) {
+                driver = response.getBody();
+            }else {
+                LOG.error("Driver Not found !");
+                return;
+            }
+
+            String email = getDriverEmail(driver.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Email not found for driver ID: " + assignment.getDriverId()));
+
+            LOG.info("Got email : " + email + " for user : " + driver.getUserId());
             assignmentNotifProducer.generateAlert(new AssignmentNotif(
                     assignment.getId(),
                     assignment.getDriverId(),
+                    email,
                     assignment.getBinId(),
                     new Date(),
                     TypeNotif.UNASSIGNMENT
@@ -90,5 +114,14 @@ public class AssignmentService {
         });
         driverAssignmentRepository.saveAll(assignments);
 
+    }
+
+    private Optional<String> getDriverEmail(String driverId) {
+        ResponseEntity<String> response = userClient.getEmailById(driverId);
+
+        if (response != null && response.getStatusCode().is2xxSuccessful()) {
+            return Optional.of(response.getBody());
+        }
+        return Optional.empty();
     }
 }

@@ -30,6 +30,8 @@ public class BinService {
         return binRepository.save(bin);
     }
 
+
+
     public Bin update(String id, Bin updatedBin) {
 
         validateBin(updatedBin);
@@ -54,9 +56,11 @@ public class BinService {
 
         Bin bin = binRepository.findById(binId).orElseThrow(() -> new IllegalArgumentException("Bin not found"));
         short oldLevel = bin.getFillLevel();
-        bin.setFillLevel(level);
+
+        log.info("Current level : " + level + " Old Level : " + oldLevel + ", threshold : " + bin.getAlertThreshold() );
 
         if (level > bin.getAlertThreshold()) {
+            log.info("level gotten is greater than threshold");
             producerService.generateAlert(
                     new FillAlert(binId,
                             bin.getLocation(),
@@ -69,13 +73,20 @@ public class BinService {
             // set status of bin Operational and disable all assignments if exists
             bin.setStatus(BinStatus.OPERATIONAL);
             try {
+                log.info("Disabling assignments...");
                 assignmentClient.DisableAssignments(bin.getId());
-                log.info("Assignments was successfully disabled");
+                log.info("Assignments was successfully disabled !");
             } catch (Exception e) {
                 log.error("Failed to disable assignments for bin {}: {}", bin.getId(), e.getMessage());
             }
         }
+
+        bin.setFillLevel(level);
         return binRepository.save(bin);
+    }
+
+    public Bin getById(String id) {
+        return binRepository.findById(id).orElse(null);
     }
 
     public void delete(String binId) {

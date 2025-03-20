@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -44,10 +45,6 @@ public class AuthService {
         return user.getId();
     }
 
-    public List<User> getAll() {
-        return userRepository.findAll();
-    }
-
     public LoginResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -71,5 +68,13 @@ public class AuthService {
                 .token(token)
                 .build();
 
+    }
+
+    public List<User> getAll() {
+        return userRepository.findAll();
+    }
+
+    public Optional<User> getById(String id) {
+        return userRepository.findById(id);
     }
 }

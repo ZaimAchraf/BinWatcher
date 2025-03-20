@@ -5,6 +5,8 @@ import com.binwatcher.driverservice.entity.Driver;
 import com.binwatcher.driverservice.model.CreateDriverRequest;
 import com.binwatcher.driverservice.service.DriverService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +19,26 @@ import java.util.List;
 public class DriverController {
 
     private final DriverService driverService;
+    private static final Logger LOG = LoggerFactory.getLogger(DriverController.class);
+
 
     @GetMapping
     public ResponseEntity<List<Driver>> getAll(){
         try {
             return new ResponseEntity<>(driverService.getAll(), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Driver> getById(@PathVariable String id){
+        try {
+            if (driverService.getById(id) != null)
+                return new ResponseEntity<>(driverService.getById(id), HttpStatus.OK);
+
+            LOG.error("Driver with id : " + id + " not found");
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }

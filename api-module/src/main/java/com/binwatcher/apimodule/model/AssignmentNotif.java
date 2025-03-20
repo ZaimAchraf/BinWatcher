@@ -6,16 +6,19 @@ public class AssignmentNotif {
 
     public AssignmentNotif(){};
 
-    public AssignmentNotif(String assignmentId, String driverId, String binId, Date date, TypeNotif typeNotif) {
+    public AssignmentNotif(String assignmentId, String driverId, String email, String binId, Date date, TypeNotif typeNotif) {
         this.assignmentId = assignmentId;
         this.driverId = driverId;
         this.binId = binId;
+        this.email = email;
         this.date = date;
         this.typeNotif  = typeNotif;
     }
     String assignmentId;
     String driverId;
+    String email;
     String binId;
+    String location;
     Date date;
     TypeNotif typeNotif;
 
@@ -35,12 +38,28 @@ public class AssignmentNotif {
         this.driverId = driverId;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getBinId() {
         return binId;
     }
 
     public void setBinId(String binId) {
         this.binId = binId;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public Date getDate() {

@@ -3,6 +3,8 @@ package com.binwatcher.binservice.controller;
 import com.binwatcher.binservice.entity.Bin;
 import com.binwatcher.binservice.service.BinService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import java.util.List;
 public class BinController {
 
     private BinService binService;
+    private static final Logger LOG = LoggerFactory.getLogger(BinController.class);
 
     @GetMapping
     public ResponseEntity<List<Bin>> getAll(){
@@ -43,6 +46,19 @@ public class BinController {
             return new ResponseEntity<>(bin, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getLocationById(@PathVariable String id) {
+        try {
+            if (binService.getById(id) != null)
+                return new ResponseEntity<>(binService.getById(id).getLocation(), HttpStatus.OK);
+
+            LOG.error("Bin with id : " + id + " not found");
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Bin with id : " + id + " not found", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
