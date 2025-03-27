@@ -24,8 +24,9 @@ public class MailSenderService {
 
     @Value("${email.from}")
     private String from;
-    @Value("${email.subject}")
-    private String subject;
+
+    private final String BIN_ASSIGNMENT_SUBJECT = "You Have Been Assigned a New Bin";
+    private final String BIN_UNASSIGNMENT_SUBJECT = "Bin Unassignment Notification";
 
 
     public void sendEmail(AssignmentNotif notification) throws MessagingException {
@@ -42,8 +43,11 @@ public class MailSenderService {
 
         helper.setFrom(from);
         helper.setTo(notification.getEmail());
-        helper.setSubject(subject);
-        helper.setText(htmlContent, true);
+        helper.setSubject(
+                notification.getTypeNotif().equals(TypeNotif.ASSIGNMENT)
+                        ? BIN_ASSIGNMENT_SUBJECT
+                        : BIN_UNASSIGNMENT_SUBJECT
+        );        helper.setText(htmlContent, true);
 
         mailSender.send(message);
     }

@@ -33,10 +33,15 @@ public class AssignmentService {
         List<DriverAssignment> assignments = driverAssignmentRepository.findByBinIdAndIsActiveTrue(alert.getBinId());
 
         if (!assignments.isEmpty()) { // Bin already assigned
-            LOG.info("Skip Assignment cause the bin is already assigned to the driver with id : " + assignments.get(0).getDriverId());
+            LOG.info("Skip Assignment cause the bin is already assigned to the driver with id : {}.", assignments.get(0).getDriverId());
             return ;
         }
         List<Driver> drivers = driverClient.getAll().getBody();
+
+        if (drivers.isEmpty()) {
+            LOG.error("No drivers available to assign to the bin {}", alert.getBinId());
+            return;
+        }
 
         Driver nearestDriver = findNearestDriver(alert, drivers);
         if (nearestDriver != null) {
@@ -44,7 +49,7 @@ public class AssignmentService {
             assignment.setBinId(alert.getBinId());
             assignment.setDriverId(nearestDriver.getId());
             driverAssignmentRepository.save(assignment);
-            System.out.println("Assigned driver " + nearestDriver.getId() + " to bin " + alert.getBinId());
+            LOG.info("Assigned driver {} to bin {}.", nearestDriver.getId(), alert.getBinId());
             String email = getDriverEmail(nearestDriver.getUserId())
                     .orElseThrow(() -> new RuntimeException("Email not found for driver ID: " + assignment.getDriverId()));
             assignmentNotifProducer.generateAlert(
@@ -84,7 +89,7 @@ public class AssignmentService {
             return ; // No assignment was found
         }
 
-        LOG.info("Got " + assignments.size() + " active assignments for bin : " + binId);
+        LOG.info("Got {} actives assignments for bin {}.", assignments.size(), binId);
 
         assignments.forEach(assignment -> {
 
@@ -102,7 +107,7 @@ public class AssignmentService {
             String email = getDriverEmail(driver.getUserId())
                     .orElseThrow(() -> new RuntimeException("Email not found for driver ID: " + assignment.getDriverId()));
 
-            LOG.info("Got email : " + email + " for user : " + driver.getUserId());
+            LOG.info("Got email : {} for user : {}.", email, driver.getUserId());
             assignmentNotifProducer.generateAlert(new AssignmentNotif(
                     assignment.getId(),
                     assignment.getDriverId(),

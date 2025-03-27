@@ -1,5 +1,6 @@
 package com.binwatcher.notificationservice.service;
 
+import com.binwatcher.apimodule.config.KafkaConfigProperties;
 import com.binwatcher.apimodule.model.AssignmentNotif;
 import com.binwatcher.apimodule.model.FillAlert;
 import jakarta.mail.MessagingException;
@@ -16,19 +17,22 @@ import org.springframework.stereotype.Service;
 public class AssignmentNotifConsumer {
 
     private final NotificationService notificationService;
+    private final KafkaConfigProperties kafkaConfigProperties;
     private static final Logger LOG = LoggerFactory.getLogger(AssignmentNotifConsumer.class);
 
     @KafkaListener(
-            topics = "assignment-notif",
-            groupId = "notification-service-group",
+            topics = "#{@kafkaConfigProperties.getAssignmentNotifTopic()}",
+            groupId = "#{@kafkaConfigProperties.getConsumerGroup()}",
             containerFactory = "concurrentKafkaListenerContainerFactory"
     )
     public void consumeBinFill(ConsumerRecord<String, AssignmentNotif> record, Acknowledgment acknowledgment) {
 
         AssignmentNotif assignmentNotif = record.value();
-        LOG.info("Received notif => driverId : " + assignmentNotif.getDriverId()
-                + ", email : " + assignmentNotif.getEmail()
-                + ", binId : " + assignmentNotif.getBinId());
+        LOG.info("Received notif in topic : {} => driverId : {}, email : {}, binId : {}."
+                ,kafkaConfigProperties.getAssignmentNotifTopic()
+                , assignmentNotif.getDriverId()
+                , assignmentNotif.getEmail()
+                , assignmentNotif.getBinId());
 
         try {
             notificationService.sendMail(assignmentNotif);

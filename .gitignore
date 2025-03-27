@@ -10,6 +10,9 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
+# env file
+set_env.bat
+
 # Package Files #
 *.jar
 *.war

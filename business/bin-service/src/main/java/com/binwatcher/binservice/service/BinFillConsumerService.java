@@ -1,5 +1,6 @@
 package com.binwatcher.binservice.service;
 
+import com.binwatcher.apimodule.config.KafkaConfigProperties;
 import com.binwatcher.apimodule.model.FillMessage;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -14,16 +15,18 @@ import org.springframework.stereotype.Service;
 public class BinFillConsumerService {
 
     private final BinService binService;
-    private static final Logger log = LoggerFactory.getLogger(BinFillConsumerService.class);
+    private final KafkaConfigProperties kafkaConfigProperties;
+    private static final Logger LOG = LoggerFactory.getLogger(BinFillConsumerService.class);
 
     @KafkaListener(
-            topics = "bin-fill",
-            groupId = "bin-service-group",
+            topics = "#{@kafkaConfigProperties.getBinFillLevelTopic()}",
+            groupId = "#{@kafkaConfigProperties.getConsumerGroup()}",
             containerFactory = "concurrentKafkaListenerContainerFactory"
     )
     public void consumeBinFill(ConsumerRecord<String, FillMessage> record, Acknowledgment acknowledgment) {
 
-        log.info("received fill message => " + record.value());
+        LOG.info("Received message in topic {} => {} ",
+                kafkaConfigProperties.getBinFillLevelTopic(), record.value());
         binService.updateFillLevel(record.value().getId(), record.value().getFillLevel());
 
         acknowledgment.acknowledge();

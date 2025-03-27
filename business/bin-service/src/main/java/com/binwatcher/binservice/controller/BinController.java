@@ -21,11 +21,17 @@ public class BinController {
     private static final Logger LOG = LoggerFactory.getLogger(BinController.class);
 
     @GetMapping
-    public ResponseEntity<List<Bin>> getAll(){
+    public ResponseEntity<List<Bin>> getAll() {
         try {
-            return new ResponseEntity<>(binService.getAll(), HttpStatus.OK);
+            List<Bin> bins = binService.getAll();
+            if (bins.isEmpty()) {
+                LOG.warn("No bins found");
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(bins, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            LOG.error("Error retrieving bins: ", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -35,6 +41,7 @@ public class BinController {
             Bin createdBin = binService.create(bin);
             return new ResponseEntity<>(createdBin, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
+            LOG.error("Invalid bin data: ", e);
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
@@ -45,6 +52,7 @@ public class BinController {
             Bin bin = binService.update(id, updatedBin);
             return new ResponseEntity<>(bin, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
+            LOG.error("Error updating bin with ID {}: ", id, e);
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
@@ -55,19 +63,25 @@ public class BinController {
             if (binService.getById(id) != null)
                 return new ResponseEntity<>(binService.getById(id).getLocation(), HttpStatus.OK);
 
-            LOG.error("Bin with id : " + id + " not found");
+            LOG.error("Bin with id : {} not found !", id);
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>("Bin with id : " + id + " not found", HttpStatus.INTERNAL_SERVER_ERROR);
+            LOG.error("Error retrieving bin with ID {}: ", id, e);
+            return new ResponseEntity<>("Bin not found", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PatchMapping("/{id}/fill-level")
     public ResponseEntity<Bin> updateFillLevel(@PathVariable String id, @RequestParam short level) {
         try {
+            if (level < 0) {
+                LOG.warn("Invalid fill level for bin {}: {}", id, level);
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            }
             Bin bin = binService.updateFillLevel(id, level);
             return new ResponseEntity<>(bin, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
+            LOG.error("Error updating level for bin with ID {}: ", id, e);
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
@@ -78,6 +92,7 @@ public class BinController {
             binService.delete(id);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (IllegalArgumentException e) {
+            LOG.error("Error deleting bin with ID {}: ", id, e);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }

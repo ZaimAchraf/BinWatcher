@@ -1,7 +1,9 @@
 package com.binwatcher.binservice.config;
 
+import com.binwatcher.apimodule.config.KafkaConfigProperties;
 import com.binwatcher.apimodule.model.FillAlert;
 import com.binwatcher.apimodule.model.FillMessage;
+import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -15,19 +17,22 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Configuration
+@AllArgsConstructor
 public class KafkaConfig {
 
+    private final KafkaConfigProperties kafkaConfigProperties;
     @Bean
     public ProducerFactory<String, FillAlert> kafkaProducer() {
         Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfigProperties.getBootstrapServerConfig());
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        config.put(ProducerConfig.RETRIES_CONFIG, 2);
-        config.put(ProducerConfig.ACKS_CONFIG, "1");
+        config.put(ProducerConfig.RETRIES_CONFIG, kafkaConfigProperties.getRetriesConfig());
+        config.put(ProducerConfig.ACKS_CONFIG, kafkaConfigProperties.getAcksConfig());
 
         return new DefaultKafkaProducerFactory<String, FillAlert> (config);
     }
@@ -40,16 +45,16 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, FillMessage> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "bin-service-group");
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConfigProperties.getBootstrapServerConfig());
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConfigProperties.getConsumerGroup());
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-//        config.put(JsonDeserializer.TRUSTED_PACKAGES, "com.binwatcher.sensorservice.model");
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, kafkaConfigProperties.isAutoCommitConfig());
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, kafkaConfigProperties.getAutoOffsetResetConfig());
 
         JsonDeserializer<FillMessage> deserializer = new JsonDeserializer<>(FillMessage.class);
-        deserializer.addTrustedPackages("com.binwatcher.apimodule.model");
+        List<String> trustedPackages = kafkaConfigProperties.getTrustedPackages();
+        trustedPackages.forEach(deserializer::addTrustedPackages);
 
         return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
     }

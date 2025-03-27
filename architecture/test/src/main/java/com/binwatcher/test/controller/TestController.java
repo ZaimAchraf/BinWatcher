@@ -1,5 +1,7 @@
 package com.binwatcher.test.controller;
 
+import com.binwatcher.apimodule.config.KafkaConfigProperties;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,22 +11,25 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/test")
+@AllArgsConstructor
 public class TestController {
 
-    @Value("${defaultX}")
-    private Integer defaultX;
-    @Value("${defaultY}")
-    private Integer defaultY;
+    private final KafkaConfigProperties kafkaConfigProperties;
 
-    @Value("${paramX}")
-    private Integer paramX;
-    @Value("${paramY}")
-    private Integer paramY;
+//    @Value("${defaultX}")
+//    private Integer defaultX;
+//    @Value("${defaultY}")
+//    private Integer defaultY;
+//
+//    @Value("${paramX}")
+//    private Integer paramX;
+//    @Value("${paramY}")
+//    private Integer paramY;
 
-    @GetMapping("/testArchitecture")
+    @GetMapping("/testKafkaConfig")
     public ResponseEntity<String> test() {
         return new ResponseEntity<String>(
-                "defaultXY : (" + defaultX + ", " + defaultY + ")\n paramXY : (" + paramX + ", " + paramY + ")",
+                "kafka config : (" + kafkaConfigProperties.getBootstrapServerConfig() + ", " + kafkaConfigProperties.getAcksConfig() + ")",
                 HttpStatus.OK);
     }
 

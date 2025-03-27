@@ -4,6 +4,7 @@ import com.binwatcher.gatewayservice.filter.AuthFilter;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.timelimiter.TimeLimiterConfig;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
@@ -17,13 +18,11 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 
 @Component
+@AllArgsConstructor
 public class GatewayConfig {
 
     private final AuthFilter authFilter;
-
-    public GatewayConfig(AuthFilter authFilter) {
-        this.authFilter = authFilter;
-    }
+    private final CircuitBreakerProperties circuitBreakerProperties;
 
     @Bean
     public RouteLocator routeLocator(RouteLocatorBuilder builder) {
@@ -33,7 +32,7 @@ public class GatewayConfig {
                                 .filter(authFilter.apply(new AuthFilter.Config()))
                                 .circuitBreaker(config -> config
                                         .setName("circuitBreakerService")
-                                        .setFallbackUri("forward:/fallback/test")
+                                        .setFallbackUri("forward:${fallback.test.uri}")
                         ))
                         .uri("lb://test")
                 )
@@ -41,7 +40,7 @@ public class GatewayConfig {
                         .filters(f ->
                                 f.circuitBreaker(config -> config
                                         .setName("circuitBreakerService")
-                                        .setFallbackUri("forward:/fallback/security-service")
+                                        .setFallbackUri("forward:${fallback.security-service.uri}")
                                 ))
                         .uri("lb://security-service")
                 )
@@ -52,11 +51,11 @@ public class GatewayConfig {
     public CircuitBreaker circuitBreakerService() {
         // Define custom CircuitBreaker configuration
         CircuitBreakerConfig config = CircuitBreakerConfig.custom()
-                .slidingWindowSize(10)
-                .failureRateThreshold(50)
-                .waitDurationInOpenState(Duration.ofSeconds(5))
-                .permittedNumberOfCallsInHalfOpenState(3)
-                .build();
+            .slidingWindowSize(circuitBreakerProperties.getSlidingWindowSize())
+            .failureRateThreshold(circuitBreakerProperties.getFailureRateThreshold())
+            .waitDurationInOpenState(Duration.ofSeconds(circuitBreakerProperties.getWaitDurationInOpenState()))
+            .permittedNumberOfCallsInHalfOpenState(circuitBreakerProperties.getPermittedNumberOfCallsInHalfOpenState())
+            .build();
 
         return CircuitBreaker.of("serviceCircuitBreaker", config); // Create the CircuitBreaker instance
     }
