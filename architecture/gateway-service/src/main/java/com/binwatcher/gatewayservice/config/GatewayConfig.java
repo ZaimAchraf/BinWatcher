@@ -5,7 +5,9 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.timelimiter.TimeLimiterConfig;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
@@ -18,8 +20,14 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class GatewayConfig {
+
+    @Value("${fallback.test.uri}")
+    private String fallbackTestUri;
+
+    @Value("${fallback.security-service.uri}")
+    private String fallbackSecurityUri;
 
     private final AuthFilter authFilter;
     private final CircuitBreakerProperties circuitBreakerProperties;
@@ -32,7 +40,7 @@ public class GatewayConfig {
                                 .filter(authFilter.apply(new AuthFilter.Config()))
                                 .circuitBreaker(config -> config
                                         .setName("circuitBreakerService")
-                                        .setFallbackUri("forward:${fallback.test.uri}")
+                                        .setFallbackUri("forward:" + fallbackTestUri)
                         ))
                         .uri("lb://test")
                 )
@@ -40,7 +48,7 @@ public class GatewayConfig {
                         .filters(f ->
                                 f.circuitBreaker(config -> config
                                         .setName("circuitBreakerService")
-                                        .setFallbackUri("forward:${fallback.security-service.uri}")
+                                        .setFallbackUri("forward:" + fallbackSecurityUri)
                                 ))
                         .uri("lb://security-service")
                 )

@@ -9,7 +9,6 @@ import java.util.List;
 
 @FeignClient(name = "bin-service")
 public interface BinClient {
-
     @GetMapping("/api/bins")
     public ResponseEntity<List<Bin>> getAll();
 }

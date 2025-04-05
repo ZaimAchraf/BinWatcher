@@ -24,5 +24,6 @@ public class NotificationService {
                 notif.getTypeNotif().equals(TypeNotif.ASSIGNMENT) ? "assignment" : "unassignment",
                 notif.getEmail());
         mailSenderService.sendEmail(notif);
+        LOG.info("Email sent successfully");
     }
 }

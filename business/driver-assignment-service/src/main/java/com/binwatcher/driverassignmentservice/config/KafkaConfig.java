@@ -3,6 +3,7 @@ package com.binwatcher.driverassignmentservice.config;
 import com.binwatcher.apimodule.config.KafkaConfigProperties;
 import com.binwatcher.apimodule.model.FillAlert;
 import com.binwatcher.apimodule.model.AssignmentNotif;
+import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -20,8 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 @Configuration
+@AllArgsConstructor
 public class KafkaConfig {
-    private KafkaConfigProperties kafkaConfigProperties;
+    private final KafkaConfigProperties kafkaConfigProperties;
     @Bean
     public ProducerFactory<String, AssignmentNotif> kafkaProducer() {
         Map<String, Object> config = new HashMap<>();

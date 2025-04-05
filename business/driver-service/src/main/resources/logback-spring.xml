@@ -1,0 +1,35 @@
+<configuration>
+
+    <!-- Définition des variables -->
+    <property name="LOG_PATH" value="./logs"/>
+    <property name="LOG_LEVEL" value="INFO"/>
+
+    <!-- Get the environment based on the environment variable : spring.profiles.active default is dev -->
+    <property name="springProfile" value="${spring.profiles.active:-dev}" />
+
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>localhost:5044</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service": "driver-service", "env": "${springProfile}"}</customFields>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOGSTASH"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="LOGSTASH"/>
+        </root>
+    </springProfile>
+
+</configuration>

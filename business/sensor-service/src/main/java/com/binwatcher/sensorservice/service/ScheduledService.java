@@ -29,7 +29,7 @@ public class ScheduledService {
         initBins();
     }
 
-    @Scheduled(cron = "#{@scheduledConfigProperties.getInitBinsCron()}")
+    @Scheduled(cron = "0 0 */2 * * ?")
     public void initBins() {
         try {
             listBins = binClient.getAll().getBody();
@@ -43,7 +43,7 @@ public class ScheduledService {
         }
     }
 
-    @Scheduled(cron = "#{@scheduledConfigProperties.getMockFillCron()}") // Every 2 minutes
+    @Scheduled(cron = "* */2 * * * ?") // Every 2 minutes
     public void mockFill() {
         if (listBins != null && !listBins.isEmpty()) {
             int index = (int) (Math.random() * listBins.size());

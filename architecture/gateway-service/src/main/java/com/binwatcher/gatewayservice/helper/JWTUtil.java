@@ -14,10 +14,10 @@ import java.util.function.Function;
 @Component
 public class JWTUtil {
 
-    @Value("${app.token.secret}")
+    @Value("${app.jwt.secret}")
     private String SECRET;
 
-    @Value("${app.token.delay}")
+    @Value("${app.jwt.expiration}")
     private Integer DELAY;
     public Key getKey() {
         byte[] bytes = Decoders.BASE64.decode(SECRET);
