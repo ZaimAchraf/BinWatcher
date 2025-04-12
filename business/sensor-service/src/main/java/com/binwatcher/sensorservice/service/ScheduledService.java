@@ -4,6 +4,8 @@ import com.binwatcher.apimodule.model.FillMessage;
 import com.binwatcher.sensorservice.client.BinClient;
 import com.binwatcher.sensorservice.config.ScheduledConfigProperties;
 import com.binwatcher.sensorservice.model.Bin;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,6 +19,8 @@ public class ScheduledService {
     private final BinClient binClient;
     private final KafkaProducerService kafkaProducerService;
     private final ScheduledConfigProperties scheduledConfigProperties;
+    @Getter
+    @Setter
     private List<Bin> listBins;
     private final Logger LOG = LoggerFactory.getLogger(ScheduledService.class);
 
@@ -55,4 +59,5 @@ public class ScheduledService {
             LOG.warn("No bins available to process mock fill.");
         }
     }
+
 }
