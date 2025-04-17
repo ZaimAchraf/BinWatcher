@@ -1,0 +1,15 @@
+# Étape 1 : Build avec Maven
+FROM maven:3.8.5-openjdk-17 AS builder
+
+WORKDIR /build
+COPY api-module api-module
+COPY business/driver-service business/driver-service
+
+RUN mvn clean install -f api-module/pom.xml
+RUN mvn clean package -f business/driver-service/pom.xml -DskipTests
+
+# Étape 2 : Image finale d'exécution
+FROM openjdk:17-jdk-alpine
+WORKDIR /app
+COPY --from=builder /build/business/driver-service/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]

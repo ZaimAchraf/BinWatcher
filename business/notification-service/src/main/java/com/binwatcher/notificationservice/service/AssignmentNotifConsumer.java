@@ -39,6 +39,8 @@ public class AssignmentNotifConsumer {
             acknowledgment.acknowledge();
         } catch (MessagingException e) {
             LOG.error("Error sending email: " + e.getMessage());
+        }catch (Exception e) {
+            LOG.error("Error occurred: " + e.getMessage());
         }
     }
 }

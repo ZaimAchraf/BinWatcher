@@ -7,6 +7,8 @@ services:
       - "8600:8600/udp"
     environment:
       - CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt":true}
+    networks:
+      - app_network
   mongodb:
     image: mongo:latest
     container_name: BW_DB
@@ -17,6 +19,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin
     volumes:
       - BW_DB:/data/db
+    networks:
+      - app_network
   zookeeper:
     image: 'bitnami/zookeeper:latest'
     container_name: zookeeper
@@ -24,19 +28,24 @@ services:
       - ALLOW_ANONYMOUS_LOGIN=yes
     ports:
       - "2181:2181"
+    networks:
+      - app_network
   kafka:
     image: 'bitnami/kafka:latest'
     container_name: kafka
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_BROKER_ID=1
+      - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
     depends_on:
       - zookeeper
     ports:
       - "9092:9092"
+    networks:
+      - app_network
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.13
     container_name: elasticsearch
@@ -46,7 +55,7 @@ services:
     ports:
       - "9200:9200"
     networks:
-      - elk
+      - app_network
 
   logstash:
     image: docker.elastic.co/logstash/logstash:7.17.13
@@ -61,7 +70,7 @@ services:
     depends_on:
       - elasticsearch
     networks:
-      - elk
+      - app_network
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.17.13
@@ -73,10 +82,139 @@ services:
     depends_on:
       - elasticsearch
     networks:
-      - elk
-
+      - app_network
+  maildev:
+    image: maildev/maildev
+    container_name: maildev
+    ports:
+      - "1025:1025"   # SMTP
+      - "1080:1080"   # Web UI
+    networks:
+      - app_network
+  #-------------------------------------------------------------------------------------
+  #  application Services
+  #-------------------------------------------------------------------------------------
+  config-service:
+    build:
+      context: ./architecture/config-service
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "9090:9090"
+    networks:
+      - app_network
+    depends_on:
+      - consul
+  gateway-service:
+    build:
+      context: ./architecture/gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    environment:
+      - JWT_SECRET=c2VjcmV0X2V4YW1wbGU= #here we add the secret we want to use to create and verify JWT tokens
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+    depends_on:
+      - security-service
+  security-service:
+    build:
+      context: ./architecture/security-service
+      dockerfile: Dockerfile
+    container_name: security-service
+    environment:
+      - SECURITY_MONGO_URI=mongodb://admin:admin@mongodb:27017/BW_USER_DB?authSource=admin
+      - JWT_SECRET=c2VjcmV0X2V4YW1wbGU= #here we add the secret we want to use to create and verify JWT tokens
+    ports:
+      - "8081:8081"
+    networks:
+      - app_network
+    depends_on:
+      - config-service
+  admin-service:
+    build:
+      context: ./business/admin-service
+      dockerfile: Dockerfile
+    container_name: admin-service
+    ports:
+      - "8082:8082"
+    networks:
+      - app_network
+    depends_on:
+      - config-service
+  bin-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.bin-service
+    container_name: bin-service
+    environment:
+      - BIN_MONGO_URI=mongodb://admin:admin@mongodb:27017/BW_BINS_DB?authSource=admin
+      - SPRING_ACTIVE_PROFILE=dev
+    ports:
+      - "8083:8083"
+    networks:
+      - app_network
+    depends_on:
+      - config-service
+  sensor-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor-service
+    container_name: sensor-service
+    environment:
+      - SPRING_ACTIVE_PROFILE=dev
+    ports:
+      - "8084:8084"
+    networks:
+      - app_network
+    depends_on:
+      - config-service
+  driver-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.driver-service
+    container_name: driver-service
+    environment:
+      - DRIVER_MONGO_URI=mongodb://admin:admin@mongodb:27017/BW_DRIVER_DB?authSource=admin
+      - SPRING_ACTIVE_PROFILE=dev
+    ports:
+      - "8085:8085"
+    networks:
+      - app_network
+    depends_on:
+      - security-service   # to create accounts for new drivers
+  driver-assignment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.driver-assignment-service
+    container_name: driver-assignment-service
+    environment:
+      - ASSIGNMENT_MONGO_URI=mongodb://admin:admin@mongodb:27017/BW_DRIVER_ASSIGNMENT_DB?authSource=admin
+      - SPRING_ACTIVE_PROFILE=dev
+    ports:
+      - "8086:8086"
+    networks:
+      - app_network
+    depends_on:
+      - driver-service
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.notification-service
+    container_name: notification-service
+    environment:
+      - NOTIF_MONGO_URI=mongodb://admin:admin@mongodb:27017/BW_NOTIFICATION_DB?authSource=admin
+      - SPRING_ACTIVE_PROFILE=dev
+    ports:
+      - "8087:8087"
+    networks:
+      - app_network
+    depends_on:
+      - bin-service
+      - maildev
 networks:
-  elk:
+  app_network:
     driver: bridge
 volumes:
   BW_DB:

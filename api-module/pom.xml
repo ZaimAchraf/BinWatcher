@@ -63,6 +63,10 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Ne pas essayer d'exécuter l'application, juste créer le JAR -->
+                    <skip>true</skip>
+                </configuration>
             </plugin>
         </plugins>
     </build>

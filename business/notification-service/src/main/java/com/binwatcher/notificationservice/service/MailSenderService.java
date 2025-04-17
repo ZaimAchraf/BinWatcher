@@ -48,7 +48,6 @@ public class MailSenderService {
                         ? BIN_ASSIGNMENT_SUBJECT
                         : BIN_UNASSIGNMENT_SUBJECT
         );        helper.setText(htmlContent, true);
-//        Comment the following line to prevent spam due to large number of emails
-//        mailSender.send(message);
+        mailSender.send(message);
     }
 }
