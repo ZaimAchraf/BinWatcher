@@ -1,76 +1,91 @@
 # BinWatcher
-binWatcher est une application d'apprentissage basée sur une architecture microservices pour gérer les bins, les conducteurs (drivers) et leurs assignations. L'application simule la gestion des niveaux de remplissage des bins et l'assignation des conducteurs pour la collecte.
 
+BinWatcher is a learning application based on a microservices architecture to manage bins, drivers, and their assignments. The application simulates the management of bin fill levels and the assignment of drivers for collection.
 
 ![Bin_Watcher_Diagramme drawio](https://github.com/user-attachments/assets/49cb41f0-aea2-489c-a5f1-98b97230aba1)
 
+---
 
-## 🚀 Fonctionnalités principales
+## 🚀 Main Features
 
-- **bin-service** : Service principal pour la gestion des bins. Il permet de créer, consulter et mettre à jour les bins.
-- **driver-service** : Service pour la gestion des conducteurs (drivers). Il permet de créer, consulter et gérer les informations des conducteurs.
-- **admin-service** : Un service utilisé par l'admin pour interroger les services `bin-service` et `driver-service` afin de gérer les bins et les conducteurs.
-- **sensor-service** : Simule les capteurs des bins en générant des niveaux de remplissage aléatoires et en envoyant des messages dans un topic Kafka.
-- **driver-assignment-service** : Analyse les alertes de niveau de remplissage, détecte les conducteurs les plus proches des bins et assigne les bins aux conducteurs.
-- **notification-service** : Envoie des notifications par email aux conducteurs lorsqu'un bin est assigné ou désassigné.
+- **bin-service**: Main service for managing bins. Allows creating, retrieving, and updating bins.
+- **driver-service**: Service for managing drivers. Allows creating, retrieving, and managing driver information.
+- **admin-service**: Service used by the admin to query `bin-service` and `driver-service` to manage bins and drivers.
+- **sensor-service**: Simulates bin sensors by generating random fill levels and sending messages to a Kafka topic.
+- **driver-assignment-service**: Analyzes fill-level alerts, finds the closest available drivers, and assigns bins to drivers.
+- **notification-service**: Sends email notifications to drivers when a bin is assigned or unassigned.
 
-## 🧑‍💼 Workflow métier
+---
 
-1. **Génération des niveaux de remplissage** :
-   - Le service **sensor-service** récupère la liste des bins depuis le service **bin-service**.
-   - Ensuite, **sensor-service** génère des niveaux de remplissage aléatoires pour chaque bin et publie ces informations dans le topic Kafka **bin-fill**.
+## 🧑‍💼 Business Workflow
 
-2. **Vérification et mise à jour du niveau de remplissage** :
-   - Le service **bin-service** écoute le topic **bin-fill** et reçoit les messages contenant les niveaux de remplissage des bins.
-   - Lorsqu'un message est reçu, **bin-service** met à jour le niveau de remplissage du bin correspondant.
-   - Si le niveau de remplissage dépasse un seuil pré-déterminé pour un bin, **bin-service** publie un message dans le topic **fill-alert** pour alerter les autres services.
+1. **Generating fill levels**:
+   - **sensor-service** retrieves the list of bins from **bin-service**.
+   - Then, it generates random fill levels for each bin and publishes this information to the Kafka topic **bin-fill**.
 
-3. **Assignation du conducteur** :
-   - Le service **driver-assignment-service** écoute le topic **fill-alert** et récupère les alertes liées aux bins ayant dépassé le seuil de remplissage.
-   - Pour chaque alerte reçue, **driver-assignment-service** analyse la localisation du bin et compare avec la liste des conducteurs disponibles.
-   - Le service assigne le conducteur le plus proche pour récupérer le bin.
-   - Un message est ensuite publié dans le topic **assignment-notif** pour notifier les autres services de l'assignation.
+2. **Checking and updating fill levels**:
+   - **bin-service** listens to the **bin-fill** topic and receives messages containing bin fill levels.
+   - When a message is received, **bin-service** updates the corresponding bin’s fill level.
+   - If the fill level exceeds a predefined threshold, **bin-service** publishes a message to the **fill-alert** topic to alert other services.
 
-4. **Envoi de notifications** :
-   - Le service **notification-service** écoute le topic **assignment-notif** et récupère les messages relatifs aux bins assignés ou désassignés.
-   - Lorsqu'un message est reçu, **notification-service** envoie un email au conducteur pour l'informer qu'un bin lui a été assigné ou désassigné.
+3. **Driver assignment**:
+   - **driver-assignment-service** listens to **fill-alert** and receives alerts for bins that exceeded the threshold.
+   - For each alert, it analyzes the bin location and compares it with the list of available drivers.
+   - The service assigns the closest driver to collect the bin.
+   - A message is then published to the **assignment-notif** topic to notify other services of the assignment.
 
-5. **Désassignation des bins** :
-   - Si **bin-service** reçoit un message de niveau de remplissage inférieur au seuil pour un bin qui était déjà assigné à un conducteur, il envoie un appel HTTP à **driver-assignment-service** via OpenFeign pour désassigner le bin.
-   - **driver-assignment-service** désassigne le conducteur du bin et envoie un message dans le topic **assignment-notif** pour notifier **notification-service**, qui enverra un email au conducteur concerné pour l'informer de la désassignation.
+4. **Sending notifications**:
+   - **notification-service** listens to **assignment-notif** and receives messages about assigned or unassigned bins.
+   - When a message is received, it sends an email to the driver informing them of the assignment or unassignment.
 
-## 🧱 Architecture technique
+5. **Unassigning bins**:
+   - If **bin-service** receives a message showing a bin’s fill level below the threshold that was previously assigned, it calls **driver-assignment-service** via OpenFeign to unassign the bin.
+   - **driver-assignment-service** unassigns the driver and sends a message to **notification-service**, which notifies the driver via email.
 
-L'application utilise les technologies suivantes :
+---
 
-- **Spring Boot** : Framework principal utilise.
-- **Kafka** : Communication asynchrone entre les services via des topics.
-- **Consul** : Chaque service s'enregistre automatiquement dans Consul pour permettre la découverte des services et gérer la communication entre eux.
-- **Config Server** : Les services récupèrent leurs configurations à partir du `config-server`, qui lui-même récupère les configurations depuis un dépôt de configuration central.
-- **Docker & Docker Compose** : Conteneurisation des services pour un déploiement simplifié.
-- **MongoDB** : Base de données utilisée pour les services nécessitant de stocker des données.
-- **Maildev** : Serveur SMTP de développement pour l'envoi d'emails.
-- **ELK (Elasticsearch, Logstash, Kibana)** : Logging centralisé et suivi des logs.
-- **Gateway Service** : Tous les appels externes passent par la Gateway.
-- **Security Service** : Gère l'authentification et l'enregistrement des utilisateurs.
-- **Config Service** : Centralisation des configurations pour les microservices.
+## 🧱 Technical Architecture
 
-> Lors de l'exécution, tous les services s'enregistrent dans **Consul** pour permettre la découverte automatique des services. Les services récupèrent également leurs configurations depuis le **config-server**, qui récupère les configurations à partir d'un dépôt centralisé de configurations.
+The application uses the following technologies:
 
+- **Spring Boot**: Main framework.  
+- **Kafka**: Asynchronous communication between services using topics.  
+- **Consul**: Each service automatically registers to enable service discovery and inter-service communication.  
+- **Config Server**: Services retrieve their configuration from the `config-server`, which fetches it from a central configuration repository.  
+- **Docker & Docker Compose**: Containerization of services for simplified deployment.  
+- **MongoDB**: Database used by services that need to store data.  
+- **Maildev**: Development SMTP server for sending emails.  
+- **ELK (Elasticsearch, Logstash, Kibana)**: Centralized logging.  
+- **Gateway Service**: Entry point for all external calls.  
+- **Security Service**: Manages user authentication and registration.  
+- **Config Service**: Centralized configuration for microservices.
 
-## 📚 Structure des branches et chapitres
+> During runtime, all services register with **Consul** for automatic service discovery and retrieve configurations from the **config-server**, which loads them from a centralized repository.
 
-Chaque branche de ce projet correspond à un chapitre, qui introduit un concept ou une fonctionnalité spécifique :
+---
 
-- **Chapter 01** – Mise en place de l’architecture microservices  
-- **Chapter 02** – Service discovery avec Consul  
-- **Chapter 03** – Configuration centralisée et Config Server  
-- **Chapter 04** – API Gateway et routage dynamique  
-- **Chapter 05** – Sécurité et gestion des utilisateurs  
-- **Chapter 06** – Service bin-service et gestion des bins  
-- **Chapter 07** – Service driver-service et gestion des conducteurs  
-- **Chapter 08** – Service driver-assignment-service et logique d’assignation  
-- **Chapter 09** – Testing : tests unitaires et tests d’intégration  
+## 📚 Branches and Chapters Structure
+
+Each branch corresponds to a chapter, introducing a specific concept or feature:
+
+- **Chapter 01** – Microservices Technical Architecture  
+- **Chapter 02** – Security Implementation (Authentication & Authorization)  
+- **Chapter 03** – Bin-Service & Admin-Service Microservices  
+- **Chapter 04** – Bin Filling Management with Asynchronous Communication via Kafka  
+- **Chapter 05** – Driver Assignment Service  
+- **Chapter 06** – Notification Service for Driver Alerts  
+- **Chapter 07** – Code Improvements & Best Practices  
+- **Chapter 08** – Logging with ELK (Elasticsearch, Logstash, Kibana)  
+- **Chapter 09** – Testing  
+- **Chapter 10** – Dockerization (corresponds to the Docker-Deployment branch)  
+
+> Each chapter contains the corresponding code, documentation, and tests related to the presented functionality or concept.
+
+---
 
 ## 📧 Contact
-Créé par Zaim Achraf pour des raisons d'apprentissage. Si tu as des questions ou des suggestions, contacte-moi sur [linkedIn](https://www.linkedin.com/in/achraf-zaim-443936233/).
+
+Created by **Zaim Achraf** for learning purposes.  
+For questions or suggestions, contact me on [LinkedIn](https://www.linkedin.com/in/achraf-zaim-443936233/).
+
+---
