@@ -55,7 +55,22 @@ L'application utilise les technologies suivantes :
 - **Security Service** : Gère l'authentification et l'enregistrement des utilisateurs.
 - **Config Service** : Centralisation des configurations pour les microservices.
 
-Lors de l'exécution, tous les services s'enregistrent dans **Consul** pour permettre la découverte automatique des services. Les services récupèrent également leurs configurations depuis le **config-server**, qui récupère les configurations à partir d'un dépôt centralisé de configurations.
+> Lors de l'exécution, tous les services s'enregistrent dans **Consul** pour permettre la découverte automatique des services. Les services récupèrent également leurs configurations depuis le **config-server**, qui récupère les configurations à partir d'un dépôt centralisé de configurations.
+
+
+## 📚 Structure des branches et chapitres
+
+Chaque branche de ce projet correspond à un chapitre, qui introduit un concept ou une fonctionnalité spécifique :
+
+- **Chapter 01** – Mise en place de l’architecture microservices  
+- **Chapter 02** – Service discovery avec Consul  
+- **Chapter 03** – Configuration centralisée et Config Server  
+- **Chapter 04** – API Gateway et routage dynamique  
+- **Chapter 05** – Sécurité et gestion des utilisateurs  
+- **Chapter 06** – Service bin-service et gestion des bins  
+- **Chapter 07** – Service driver-service et gestion des conducteurs  
+- **Chapter 08** – Service driver-assignment-service et logique d’assignation  
+- **Chapter 09** – Testing : tests unitaires et tests d’intégration  
 
 ## 📧 Contact
 Créé par Zaim Achraf pour des raisons d'apprentissage. Si tu as des questions ou des suggestions, contacte-moi sur [linkedIn](https://www.linkedin.com/in/achraf-zaim-443936233/).
